@@ -51,13 +51,23 @@ public class SettlePaymentObligation
     long requestDurationMs = 500 + ThreadLocalRandom.current().nextInt(500);
 
     if (trace) {
-      log.info("--> pacs.009");
+      log.info(
+          "--> Sent pacs.009, Financial Institution Credit Transfer: move {} {} from {} to {}",
+          paymentObligation.getCurrency(),
+          paymentObligation.getAmount().longValue(),
+          paymentObligation.getDeliveryAgentBic(),
+          paymentObligation.getReceivingAgentBic());
     }
 
     scheduler.schedule(
         () -> {
           if (trace) {
-            log.info("<-- pacs.002");
+            log.info(
+                "<-- Received pacs.002, FI to FI Payment Status Report: moved {} {} from {} to {}",
+                paymentObligation.getCurrency(),
+                paymentObligation.getAmount().longValue(),
+                paymentObligation.getDeliveryAgentBic(),
+                paymentObligation.getReceivingAgentBic());
           }
 
           PaymentContext paymentContext = new PaymentContext(internalUid, paymentObligation);

@@ -51,13 +51,21 @@ public class ReserveLiquidity
     long requestDurationMs = 500 + ThreadLocalRandom.current().nextInt(500);
 
     if (trace) {
-      log.info("--> camt.050");
+      log.info(
+          "--> Sent camt.050, Liquidity Credit Transfer: reserve {} {} from {}",
+          paymentObligation.getCurrency(),
+          paymentObligation.getAmount().longValue(),
+          paymentObligation.getDeliveryAgentBic());
     }
 
     scheduler.schedule(
         () -> {
           if (trace) {
-            log.info("<-- camt.025");
+            log.info(
+                "<-- Received camt.025, Receipt: for liquidity reservation of {} {} from {}",
+                paymentObligation.getCurrency(),
+                paymentObligation.getAmount().longValue(),
+                paymentObligation.getDeliveryAgentBic());
           }
 
           LiquidityReservationContext liquidityReservationContext =

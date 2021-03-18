@@ -7,7 +7,6 @@ import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.generator.ForeignExchangeTradeGenerator;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
-import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +36,10 @@ public class AtomicSettlement {
       rate = Long.MAX_VALUE;
     }
 
+    log.info("trace: {}", trace ? "enabled" : "disabled");
+    log.info("rate: {}", rate < Long.MAX_VALUE ? rate + " settlement requests/sec" : "unlimited");
+    log.info("---");
+
     // Generate a stream of simulated foreign exchange trade settlement requests
     DataStream<ForeignExchangeTradeInstructionV04> settlementRequests =
         env.addSource(new DataGeneratorSource<>(new ForeignExchangeTradeGenerator(), rate, null))
@@ -46,8 +49,13 @@ public class AtomicSettlement {
       settlementRequests
           .map(
               request -> {
-                log.info("<-- fxtr.014");
-                return request;
+                log.info(
+                    "<-- Received fxtr.014, Foreign Exchange Trade Instruction: buy {} {} for {} {}",
+                    request.getTradingSideBuyAmountCurrency(),
+                    request.getTradingSideBuyAmount().longValue(),
+                    request.getTradingSideSellAmountCurrency(),
+                    request.getTradingSideSellAmount().longValue());
+                return null;
               })
           .addSink(new DiscardingSink<>());
     }
@@ -134,8 +142,14 @@ public class AtomicSettlement {
     if (trace) {
       completedSettlementContexts
           .map(
-              request -> {
-                log.info("--> fxtr.017");
+              context -> {
+                ForeignExchangeTradeInstructionV04 request = context.getOriginalMessage();
+                log.info(
+                    "--> Sent fxtr.017, Foreign Exchange Trade Status And Details Notification: bought {} {} for {} {}",
+                    request.getTradingSideBuyAmountCurrency(),
+                    request.getTradingSideBuyAmount().longValue(),
+                    request.getTradingSideSellAmountCurrency(),
+                    request.getTradingSideSellAmount().longValue());
                 return request;
               })
           .addSink(new DiscardingSink<>());
@@ -146,8 +160,14 @@ public class AtomicSettlement {
         .map(__ -> 1)
         .windowAll(TumblingProcessingTimeWindows.of(Time.seconds(countFreqSec)))
         .sum(0)
-        .map(count -> String.format("%s: %.1f/s", Instant.now(), count / (float) countFreqSec))
-        .print();
+        .map(
+            count -> {
+              log.info(
+                  "Completed atomic settlements: {}/sec",
+                  String.format("%.2f", count / (float) countFreqSec));
+              return null;
+            })
+        .addSink(new DiscardingSink<>());
 
     env.execute(AtomicSettlement.class.getSimpleName());
   }
