@@ -2,6 +2,7 @@ package io.atomicwire.iso20022hackathon.context;
 
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.ForeignExchangeTrade;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NonNull;
@@ -20,4 +21,7 @@ public class AtomicSettlementContext {
 
   /** The original ISO 20022 logical message that initiated this settlement process. */
   @NonNull private final ForeignExchangeTradeInstructionV04 originalMessage;
+
+  /** The timestamp when this context was created. */
+  @NonNull private final Instant startTimestamp;
 }

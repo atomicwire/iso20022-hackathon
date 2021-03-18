@@ -7,6 +7,8 @@ import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.generator.ForeignExchangeTradeGenerator;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -105,13 +107,15 @@ public class AtomicSettlement {
     completedSettlementContexts
         .map(
             context -> {
+              Duration duration = Duration.between(context.getStartTimestamp(), Instant.now());
               ForeignExchangeTradeInstructionV04 message = context.getOriginalMessage();
               return String.format(
-                  "Completed settlement: bought %s %.2f for %s %.2f",
+                  "Completed settlement: bought %s %.2f for %s %.2f in %.1f sec",
                   message.getTradingSideBuyAmountCurrency(),
                   message.getTradingSideBuyAmount(),
                   message.getTradingSideSellAmountCurrency(),
-                  message.getTradingSideSellAmount());
+                  message.getTradingSideSellAmount(),
+                  duration.toMillis() / 1000.);
             })
         .print();
 
