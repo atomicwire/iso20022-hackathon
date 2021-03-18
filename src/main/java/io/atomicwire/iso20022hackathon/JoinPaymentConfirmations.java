@@ -1,7 +1,7 @@
 package io.atomicwire.iso20022hackathon;
 
 import io.atomicwire.iso20022hackathon.context.AtomicSettlementContext;
-import io.atomicwire.iso20022hackathon.context.PaymentConfirmationContext;
+import io.atomicwire.iso20022hackathon.context.PaymentContext;
 import java.util.stream.StreamSupport;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
@@ -13,10 +13,10 @@ import org.apache.flink.util.Collector;
 
 public class JoinPaymentConfirmations
     extends RichCoFlatMapFunction<
-        AtomicSettlementContext, PaymentConfirmationContext, AtomicSettlementContext> {
+        AtomicSettlementContext, PaymentContext, AtomicSettlementContext> {
 
   private transient ValueState<AtomicSettlementContext> settlementContextState;
-  private transient ListState<PaymentConfirmationContext> paymentConfirmationContextsState;
+  private transient ListState<PaymentContext> paymentConfirmationContextsState;
 
   @Override
   public void open(Configuration parameters) {
@@ -24,8 +24,8 @@ public class JoinPaymentConfirmations
         new ValueStateDescriptor<>("settlementContext", AtomicSettlementContext.class);
     settlementContextState = getRuntimeContext().getState(settlementContextStateDescriptor);
 
-    ListStateDescriptor<PaymentConfirmationContext> paymentConfirmationContextsStateDescriptor =
-        new ListStateDescriptor<>("paymentConfirmationContexts", PaymentConfirmationContext.class);
+    ListStateDescriptor<PaymentContext> paymentConfirmationContextsStateDescriptor =
+        new ListStateDescriptor<>("paymentConfirmationContexts", PaymentContext.class);
     paymentConfirmationContextsState =
         getRuntimeContext().getListState(paymentConfirmationContextsStateDescriptor);
   }
@@ -38,7 +38,7 @@ public class JoinPaymentConfirmations
   }
 
   @Override
-  public void flatMap2(PaymentConfirmationContext value, Collector<AtomicSettlementContext> out)
+  public void flatMap2(PaymentContext value, Collector<AtomicSettlementContext> out)
       throws Exception {
     paymentConfirmationContextsState.add(value);
     emitIfAllLiquidityReserved(out);
@@ -46,7 +46,7 @@ public class JoinPaymentConfirmations
 
   /**
    * If the {@link AtomicSettlementContext} for this transaction along with all necessary {@link
-   * PaymentConfirmationContext}s have been collected, emit the settlement context and clear state.
+   * PaymentContext}s have been collected, emit the settlement context and clear state.
    */
   private void emitIfAllLiquidityReserved(Collector<AtomicSettlementContext> out) throws Exception {
     AtomicSettlementContext settlementContext = settlementContextState.value();

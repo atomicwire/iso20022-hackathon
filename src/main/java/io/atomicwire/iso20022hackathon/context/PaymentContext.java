@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 @Data
-public class PaymentConfirmationContext {
+public class PaymentContext {
 
   @NonNull private final UUID internalUid;
 

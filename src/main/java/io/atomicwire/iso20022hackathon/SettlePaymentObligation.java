@@ -1,6 +1,6 @@
 package io.atomicwire.iso20022hackathon;
 
-import io.atomicwire.iso20022hackathon.context.PaymentConfirmationContext;
+import io.atomicwire.iso20022hackathon.context.PaymentContext;
 import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import java.util.Collections;
@@ -14,12 +14,12 @@ import org.apache.flink.streaming.api.functions.async.ResultFuture;
 import org.apache.flink.streaming.api.functions.async.RichAsyncFunction;
 
 /**
- * A mock payment settlement operator that simulates instructing a payment between accounts at a
- * place of settlement (e.g. a central bank) and waiting for the confirmation by waiting a random
- * duration between 0.5 and 5.0 seconds before completing.
+ * A mock payment obligation settlement operator that simulates settling a payment between accounts
+ * at a place of settlement (e.g. a central bank) and waiting for the confirmation by waiting a
+ * random duration between 500 and 1000 seconds before completing.
  */
-public class SettleTransaction
-    extends RichAsyncFunction<PaymentObligationContext, PaymentConfirmationContext> {
+public class SettlePaymentObligation
+    extends RichAsyncFunction<PaymentObligationContext, PaymentContext> {
 
   private transient ScheduledExecutorService scheduler;
 
@@ -35,18 +35,17 @@ public class SettleTransaction
 
   @Override
   public void asyncInvoke(
-      PaymentObligationContext input, ResultFuture<PaymentConfirmationContext> resultFuture) {
+      PaymentObligationContext input, ResultFuture<PaymentContext> resultFuture) {
     UUID internalUid = input.getInternalUid();
     PaymentObligation paymentObligation = input.getPaymentObligation();
 
-    // Random duration between 0.5s and 5s
-    long requestDurationMs = 500 + ThreadLocalRandom.current().nextInt(5000 - 500);
+    // Random duration between 500 and 1000 ms
+    long requestDurationMs = 500 + ThreadLocalRandom.current().nextInt(500);
 
     scheduler.schedule(
         () -> {
-          PaymentConfirmationContext paymentConfirmationContext =
-              new PaymentConfirmationContext(internalUid, paymentObligation);
-          resultFuture.complete(Collections.singleton(paymentConfirmationContext));
+          PaymentContext paymentContext = new PaymentContext(internalUid, paymentObligation);
+          resultFuture.complete(Collections.singleton(paymentContext));
         },
         requestDurationMs,
         TimeUnit.MILLISECONDS);

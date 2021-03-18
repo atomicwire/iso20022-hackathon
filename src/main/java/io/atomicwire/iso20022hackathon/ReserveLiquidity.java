@@ -15,7 +15,7 @@ import org.apache.flink.streaming.api.functions.async.RichAsyncFunction;
 
 /**
  * A mock liquidity reservation operator that simulates reserving liquidity from a liquidity
- * provider (e.g. a central bank) by waiting a random duration between 0.5 and 5.0 seconds before
+ * provider (e.g. a central bank) by waiting a random duration between 500ms and 1000ms before
  * completing.
  */
 public class ReserveLiquidity
@@ -39,8 +39,8 @@ public class ReserveLiquidity
     UUID internalUid = input.getInternalUid();
     PaymentObligation paymentObligation = input.getPaymentObligation();
 
-    // Random duration between 0.5s and 5s
-    long requestDurationMs = 500 + ThreadLocalRandom.current().nextInt(5000 - 500);
+    // Random duration between 500 and 100 ms
+    long requestDurationMs = 500 + ThreadLocalRandom.current().nextInt(500);
 
     scheduler.schedule(
         () -> {

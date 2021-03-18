@@ -14,13 +14,43 @@ import lombok.Value;
 public class Bics {
 
   private static final List<String> EUR_BICS =
-      list("AAAABE10XXX", "BBBBDE10XXX", "CCCCFR10XXX", "DDDDIT10XXX", "EEEENL10XXX");
+      list(
+          "AAAABE10XXX",
+          "BBBBDE10XXX",
+          "CCCCFR10XXX",
+          "DDDDIT10XXX",
+          "EEEENL10XXX",
+          "FFFFBE10XXX",
+          "GGGGDE10XXX",
+          "HHHHFR10XXX",
+          "IIIIIT10XXX",
+          "JJJJNL10XXX");
 
   private static final List<String> USD_BICS =
-      list("FFFFUS10XXX", "GGGGUS10XXX", "HHHHUS10XXX", "IIIIUS10XXX", "JJJJUS10XXX");
+      list(
+          "AAAAUS10XXX",
+          "BBBBUS10XXX",
+          "CCCCUS10XXX",
+          "DDDDUS10XXX",
+          "EEEEUS10XXX",
+          "FFFFUS10XXX",
+          "GGGGUS10XXX",
+          "HHHHUS10XXX",
+          "IIIIUS10XXX",
+          "JJJJUS10XXX");
 
   private static final List<String> SGD_BICS =
-      list("KKKKSG10XXX", "LLLLSG10XXX", "MMMMSG10XXX", "NNNNSG10XXX", "OOOOSG10XXX");
+      list(
+          "AAAASG10XXX",
+          "BBBBSG10XXX",
+          "CCCCSG10XXX",
+          "DDDDSG10XXX",
+          "EEEESG10XXX",
+          "FFFFSG10XXX",
+          "GGGGSG10XXX",
+          "HHHHSG10XXX",
+          "IIIISG10XXX",
+          "JJJJSG10XXX");
 
   public static BicPair chooseRandomBicPairByCurrency(Currency currency) {
     switch (requireNonNull(currency, "currency")) {

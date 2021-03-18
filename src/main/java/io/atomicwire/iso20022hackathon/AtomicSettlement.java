@@ -2,12 +2,11 @@ package io.atomicwire.iso20022hackathon;
 
 import io.atomicwire.iso20022hackathon.context.AtomicSettlementContext;
 import io.atomicwire.iso20022hackathon.context.LiquidityReservationContext;
-import io.atomicwire.iso20022hackathon.context.PaymentConfirmationContext;
+import io.atomicwire.iso20022hackathon.context.PaymentContext;
 import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.generator.ForeignExchangeTradeGenerator;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +17,8 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.datagen.DataGeneratorSource;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
 
 public class AtomicSettlement {
 
@@ -26,7 +27,7 @@ public class AtomicSettlement {
 
     // Generate a stream of simulated foreign exchange trade settlement requests
     DataStream<ForeignExchangeTradeInstructionV04> settlementRequests =
-        env.addSource(new DataGeneratorSource<>(new ForeignExchangeTradeGenerator(), 10, 100L))
+        env.addSource(new DataGeneratorSource<>(new ForeignExchangeTradeGenerator()))
             .returns(ForeignExchangeTradeInstructionV04.class);
 
     // Map each settlement request to an AtomicSettlementContext, assigning a UID and bridging the
@@ -58,7 +59,7 @@ public class AtomicSettlement {
     // Issue liquidity reservations asynchronously and collect the results
     DataStream<LiquidityReservationContext> liquidityReservationContexts =
         AsyncDataStream.unorderedWait(
-            keyedPaymentObligationContexts, new ReserveLiquidity(), 1, TimeUnit.MINUTES, 1000);
+            keyedPaymentObligationContexts, new ReserveLiquidity(), 1, TimeUnit.MINUTES, 100_000);
 
     // Key the stream of liquidity reservations by the internal UID so they can be re-joined with
     // the original settlement request
@@ -83,40 +84,33 @@ public class AtomicSettlement {
         readyPaymentObligationContexts.keyBy(PaymentObligationContext::getInternalUid);
 
     // Issue settlements asynchronously and collect the results
-    DataStream<PaymentConfirmationContext> paymentConfirmationContexts =
+    DataStream<PaymentContext> paymentConfirmationContexts =
         AsyncDataStream.unorderedWait(
             keyedReadyPaymentObligationContexts,
-            new SettleTransaction(),
+            new SettlePaymentObligation(),
             1,
             TimeUnit.MINUTES,
-            1000);
+            100_000);
 
     // Key the stream of payment confirmations by the internal UID so they can be re-joined with the
     // original settlement request
-    KeyedStream<PaymentConfirmationContext, UUID> keyedPaymentConfirmationContexts =
-        paymentConfirmationContexts.keyBy(PaymentConfirmationContext::getInternalUid);
+    KeyedStream<PaymentContext, UUID> keyedPaymentConfirmationContexts =
+        paymentConfirmationContexts.keyBy(PaymentContext::getInternalUid);
 
     // Join the stream of payment confirmations with the original settlement context by internal UID
     KeyedStream<AtomicSettlementContext, UUID> keyedReadySettlementContexts =
-        settlementContexts.keyBy(AtomicSettlementContext::getInternalUid);
+        readySettlementContexts.keyBy(AtomicSettlementContext::getInternalUid);
     DataStream<AtomicSettlementContext> completedSettlementContexts =
         keyedReadySettlementContexts
             .connect(keyedPaymentConfirmationContexts)
             .flatMap(new JoinPaymentConfirmations());
 
+    final int countFreqSec = 10;
     completedSettlementContexts
-        .map(
-            context -> {
-              Duration duration = Duration.between(context.getStartTimestamp(), Instant.now());
-              ForeignExchangeTradeInstructionV04 message = context.getOriginalMessage();
-              return String.format(
-                  "Completed settlement: bought %s %.2f for %s %.2f in %.1f sec",
-                  message.getTradingSideBuyAmountCurrency(),
-                  message.getTradingSideBuyAmount(),
-                  message.getTradingSideSellAmountCurrency(),
-                  message.getTradingSideSellAmount(),
-                  duration.toMillis() / 1000.);
-            })
+        .map(__ -> 1)
+        .windowAll(TumblingProcessingTimeWindows.of(Time.seconds(countFreqSec)))
+        .sum(0)
+        .map(count -> String.format("%s: %.1f/s", Instant.now(), count / (float) countFreqSec))
         .print();
 
     env.execute(AtomicSettlement.class.getSimpleName());
