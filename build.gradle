@@ -79,6 +79,13 @@ jar {
 task run(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   main = javaMainClass
+  args '--trace', 'true'
+}
+
+task runUnlimited(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  main = javaMainClass
+  args '--rate', '0'
 }
 
 wrapper {
