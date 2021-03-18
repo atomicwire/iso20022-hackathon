@@ -1,6 +1,7 @@
 ext {
   versions = ext {
     assertj = '3.19.+'
+    flink = '1.12.2'
     googleJavaFormat = '1.7'
     gradle = '6.8.3'
     junit = '5.7.+'

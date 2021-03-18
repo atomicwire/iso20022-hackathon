@@ -1,5 +1,6 @@
 plugins {
   id 'java'
+  id 'com.github.johnrengelman.shadow'
   id 'com.diffplug.spotless'
 }
 
@@ -8,13 +9,26 @@ allprojects {
   version = "0.0.1-SNAPSHOT"
 }
 
+def javaMainClass = 'io.atomicwire.iso20022hackathon.AtomicSettlement'
+
 apply from: "${rootDir}/dependencies.gradle"
 
 repositories {
   mavenCentral()
 }
 
+configurations {
+  flinkShadowJar
+  implementation.extendsFrom(flinkShadowJar)
+}
+
 dependencies {
+
+  // Flink provided
+  implementation "org.apache.flink:flink-java:${versions.flink}"
+  implementation "org.apache.flink:flink-streaming-java_2.12:${versions.flink}"
+  implementation "org.apache.flink:flink-clients_2.12:${versions.flink}"
+  runtimeOnly "org.apache.flink:flink-runtime-web_2.12:${versions.flink}"
 
   // Lombok
   annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
@@ -41,6 +55,10 @@ java {
   }
 }
 
+shadowJar {
+  configurations = [project.configurations.flinkShadowJar]
+}
+
 spotless {
   java {
     googleJavaFormat(versions.googleJavaFormat)
@@ -50,6 +68,17 @@ spotless {
 
 test {
   useJUnitPlatform()
+}
+
+jar {
+  manifest {
+    attributes 'Main-Class': javaMainClass
+  }
+}
+
+task run(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  main = javaMainClass
 }
 
 wrapper {
