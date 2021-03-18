@@ -1,5 +1,8 @@
 package io.atomicwire.iso20022hackathon;
 
+import io.atomicwire.iso20022hackathon.context.AtomicSettlementContext;
+import io.atomicwire.iso20022hackathon.context.LiquidityReservationContext;
+import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.generator.ForeignExchangeTradeGenerator;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;

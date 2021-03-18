@@ -1,4 +1,4 @@
-package io.atomicwire.iso20022hackathon;
+package io.atomicwire.iso20022hackathon.context;
 
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.ForeignExchangeTrade;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
