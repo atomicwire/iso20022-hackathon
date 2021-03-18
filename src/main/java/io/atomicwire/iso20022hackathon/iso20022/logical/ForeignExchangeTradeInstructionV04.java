@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NonNull;
 
+/** A mock representation of a logical ISO 20022 fxtr.014.001.004 message. */
 @Data
 public class ForeignExchangeTradeInstructionV04 {
 
