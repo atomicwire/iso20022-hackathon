@@ -2,6 +2,7 @@ package io.atomicwire.iso20022hackathon;
 
 import io.atomicwire.iso20022hackathon.context.AtomicSettlementContext;
 import io.atomicwire.iso20022hackathon.context.LiquidityReservationContext;
+import io.atomicwire.iso20022hackathon.context.PaymentConfirmationContext;
 import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.generator.ForeignExchangeTradeGenerator;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
@@ -23,7 +24,7 @@ public class AtomicSettlement {
 
     // Generate a stream of simulated foreign exchange trade settlement requests
     DataStream<ForeignExchangeTradeInstructionV04> settlementRequests =
-        env.addSource(new DataGeneratorSource<>(new ForeignExchangeTradeGenerator(), 3, 10L))
+        env.addSource(new DataGeneratorSource<>(new ForeignExchangeTradeGenerator(), 10, 100L))
             .returns(ForeignExchangeTradeInstructionV04.class);
 
     // Map each settlement request to an AtomicSettlementContext, assigning a UID and bridging the
@@ -54,8 +55,8 @@ public class AtomicSettlement {
 
     // Issue liquidity reservations asynchronously and collect the results
     DataStream<LiquidityReservationContext> liquidityReservationContexts =
-        AsyncDataStream.orderedWait(
-            keyedPaymentObligationContexts, new ReserveLiquidity(), 10, TimeUnit.SECONDS, 1000);
+        AsyncDataStream.unorderedWait(
+            keyedPaymentObligationContexts, new ReserveLiquidity(), 1, TimeUnit.MINUTES, 1000);
 
     // Key the stream of liquidity reservations by the internal UID so they can be re-joined with
     // the original settlement request
@@ -71,7 +72,48 @@ public class AtomicSettlement {
             .connect(keyedLiquidityReservationContexts)
             .flatMap(new JoinLiquidityReservations());
 
-    readySettlementContexts.print();
+    // Split each ready settlement request into its constituent payment obligations
+    DataStream<PaymentObligationContext> readyPaymentObligationContexts =
+        readySettlementContexts.flatMap(new SplitPaymentObligations());
+
+    // Key the stream of payment obligations by internal UID to randomly distribute the settlements
+    KeyedStream<PaymentObligationContext, UUID> keyedReadyPaymentObligationContexts =
+        readyPaymentObligationContexts.keyBy(PaymentObligationContext::getInternalUid);
+
+    // Issue settlements asynchronously and collect the results
+    DataStream<PaymentConfirmationContext> paymentConfirmationContexts =
+        AsyncDataStream.unorderedWait(
+            keyedReadyPaymentObligationContexts,
+            new SettleTransaction(),
+            1,
+            TimeUnit.MINUTES,
+            1000);
+
+    // Key the stream of payment confirmations by the internal UID so they can be re-joined with the
+    // original settlement request
+    KeyedStream<PaymentConfirmationContext, UUID> keyedPaymentConfirmationContexts =
+        paymentConfirmationContexts.keyBy(PaymentConfirmationContext::getInternalUid);
+
+    // Join the stream of payment confirmations with the original settlement context by internal UID
+    KeyedStream<AtomicSettlementContext, UUID> keyedReadySettlementContexts =
+        settlementContexts.keyBy(AtomicSettlementContext::getInternalUid);
+    DataStream<AtomicSettlementContext> completedSettlementContexts =
+        keyedReadySettlementContexts
+            .connect(keyedPaymentConfirmationContexts)
+            .flatMap(new JoinPaymentConfirmations());
+
+    completedSettlementContexts
+        .map(
+            context -> {
+              ForeignExchangeTradeInstructionV04 message = context.getOriginalMessage();
+              return String.format(
+                  "Completed settlement: bought %s %.2f for %s %.2f",
+                  message.getTradingSideBuyAmountCurrency(),
+                  message.getTradingSideBuyAmount(),
+                  message.getTradingSideSellAmountCurrency(),
+                  message.getTradingSideSellAmount());
+            })
+        .print();
 
     env.execute(AtomicSettlement.class.getSimpleName());
   }

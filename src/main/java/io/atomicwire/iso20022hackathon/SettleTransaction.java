@@ -1,6 +1,6 @@
 package io.atomicwire.iso20022hackathon;
 
-import io.atomicwire.iso20022hackathon.context.LiquidityReservationContext;
+import io.atomicwire.iso20022hackathon.context.PaymentConfirmationContext;
 import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import java.util.Collections;
@@ -14,12 +14,12 @@ import org.apache.flink.streaming.api.functions.async.ResultFuture;
 import org.apache.flink.streaming.api.functions.async.RichAsyncFunction;
 
 /**
- * A mock liquidity reservation operator that simulates reserving liquidity from a liquidity
- * provider (e.g. a central bank) by waiting a random duration between 0.5 and 5.0 seconds before
- * completing.
+ * A mock payment settlement operator that simulates instructing a payment between accounts at a
+ * place of settlement (e.g. a central bank) and waiting for the confirmation by waiting a random
+ * duration between 0.5 and 5.0 seconds before completing.
  */
-public class ReserveLiquidity
-    extends RichAsyncFunction<PaymentObligationContext, LiquidityReservationContext> {
+public class SettleTransaction
+    extends RichAsyncFunction<PaymentObligationContext, PaymentConfirmationContext> {
 
   private transient ScheduledExecutorService scheduler;
 
@@ -35,7 +35,7 @@ public class ReserveLiquidity
 
   @Override
   public void asyncInvoke(
-      PaymentObligationContext input, ResultFuture<LiquidityReservationContext> resultFuture) {
+      PaymentObligationContext input, ResultFuture<PaymentConfirmationContext> resultFuture) {
     UUID internalUid = input.getInternalUid();
     PaymentObligation paymentObligation = input.getPaymentObligation();
 
@@ -44,9 +44,9 @@ public class ReserveLiquidity
 
     scheduler.schedule(
         () -> {
-          LiquidityReservationContext liquidityReservationContext =
-              new LiquidityReservationContext(internalUid, paymentObligation);
-          resultFuture.complete(Collections.singleton(liquidityReservationContext));
+          PaymentConfirmationContext paymentConfirmationContext =
+              new PaymentConfirmationContext(internalUid, paymentObligation);
+          resultFuture.complete(Collections.singleton(paymentConfirmationContext));
         },
         requestDurationMs,
         TimeUnit.MILLISECONDS);

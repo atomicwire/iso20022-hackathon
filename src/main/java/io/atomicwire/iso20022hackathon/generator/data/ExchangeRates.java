@@ -2,7 +2,6 @@ package io.atomicwire.iso20022hackathon.generator.data;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ExchangeRates {
@@ -13,8 +12,6 @@ public class ExchangeRates {
   private static final double USD_TO_EUR = 1 / EUR_TO_USD;
   private static final double SGD_TO_USD = 0.74409863;
   private static final double USD_TO_SGD = 1 / SGD_TO_USD;
-
-  private static final Random RANDOM = ThreadLocalRandom.current();
 
   public static double getFuzzedExchangeRate(Currency from, Currency to) {
     requireNonNull(from, "from");
@@ -52,7 +49,7 @@ public class ExchangeRates {
 
   // Apply a ~1% "fuzz factor" to a rate
   private static double fuzz(double rate) {
-    double fuzzFactor = 0.01 * rate * RANDOM.nextGaussian();
+    double fuzzFactor = 0.01 * rate * ThreadLocalRandom.current().nextGaussian();
     return rate + fuzzFactor;
   }
 }

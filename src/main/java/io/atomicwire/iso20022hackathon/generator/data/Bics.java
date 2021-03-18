@@ -22,8 +22,6 @@ public class Bics {
   private static final List<String> SGD_BICS =
       list("KKKKSG10XXX", "LLLLSG10XXX", "MMMMSG10XXX", "NNNNSG10XXX", "OOOOSG10XXX");
 
-  private static final Random RANDOM = ThreadLocalRandom.current();
-
   public static BicPair chooseRandomBicPairByCurrency(Currency currency) {
     switch (requireNonNull(currency, "currency")) {
       case EUR:
@@ -39,8 +37,9 @@ public class Bics {
 
   @VisibleForTesting
   static BicPair chooseRandomBicPair(List<String> list) {
-    int idx1 = RANDOM.nextInt(list.size());
-    int idx2 = RANDOM.nextInt(list.size());
+    Random random = ThreadLocalRandom.current();
+    int idx1 = random.nextInt(list.size());
+    int idx2 = random.nextInt(list.size());
 
     final String bic1 = list.get(idx1);
     final String bic2;

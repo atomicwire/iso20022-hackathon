@@ -7,12 +7,11 @@ import lombok.Value;
 
 public class Currencies {
 
-  private static final Random RANDOM = ThreadLocalRandom.current();
-
   public static CurrencyPair chooseRandomCurrencyPair() {
+    Random random = ThreadLocalRandom.current();
     Currency[] currencies = Currency.values();
-    int idx1 = RANDOM.nextInt(currencies.length);
-    int idx2 = RANDOM.nextInt(currencies.length);
+    int idx1 = random.nextInt(currencies.length);
+    int idx2 = random.nextInt(currencies.length);
 
     final Currency currency1 = currencies[idx1];
     final Currency currency2;
