@@ -85,7 +85,7 @@ task run(type: JavaExec) {
 task runUnlimited(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   main = javaMainClass
-  args '--rate', '0'
+  args '--rate', '0', '--parallelism', '0'
 }
 
 wrapper {

@@ -27,17 +27,23 @@ public class AtomicSettlement {
 
   public static void main(String[] args) throws Exception {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    env.setParallelism(1);
 
     ParameterTool params = ParameterTool.fromArgs(args);
     boolean trace = params.getBoolean("trace", false);
     long rate = params.getInt("rate", 1);
+    int parallelism = params.getInt("parallelism", 1);
+
     if (rate <= 0) {
       rate = Long.MAX_VALUE;
     }
 
+    if (parallelism != 0) {
+      env.setParallelism(parallelism);
+    }
+
     log.info("trace: {}", trace ? "enabled" : "disabled");
     log.info("rate: {}", rate < Long.MAX_VALUE ? rate + " settlement requests/sec" : "unlimited");
+    log.info("parallelism: {}", env.getParallelism());
     log.info("---");
 
     // Generate a stream of simulated foreign exchange trade settlement requests
