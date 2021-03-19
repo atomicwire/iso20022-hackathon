@@ -89,4 +89,9 @@ To run in an IDE of your choice, you must install the Lombok plugin and enable a
 License
 -------
 
-Copyright © 2021, [Atomic Wire Technology Ltd](https://www.atomicwire.io/)
+Copyright (c) 2021 [Atomic Wire Technology Ltd](https://www.atomicwire.io/)
+
+All rights reserved.
+
+Licensed under the Apache License, Version 2.0, found in the [LICENSE](LICENSE) file in the root directory of this
+repository.

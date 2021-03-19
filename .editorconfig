@@ -1,0 +1,8 @@
+[*.gradle]
+indent_size = 2
+
+[*.java]
+indent_size = 2
+
+[*]
+insert_final_newline = true
