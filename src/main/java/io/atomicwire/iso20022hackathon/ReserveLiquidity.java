@@ -47,7 +47,7 @@ public class ReserveLiquidity
     UUID internalUid = input.getInternalUid();
     PaymentObligation paymentObligation = input.getPaymentObligation();
 
-    // Random duration between 500 and 100 ms
+    // Random duration between 500 and 1000 ms
     long requestDurationMs = 500 + ThreadLocalRandom.current().nextInt(500);
 
     if (trace) {

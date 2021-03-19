@@ -8,6 +8,10 @@ import java.time.Instant;
 import java.util.UUID;
 import org.apache.flink.api.common.functions.MapFunction;
 
+/**
+ * Map an incoming settlement request to a context containing a conceptual representation of the
+ * trade and a UID for correlation.
+ */
 public class MapToAtomicSettlementContext
     implements MapFunction<ForeignExchangeTradeInstructionV04, AtomicSettlementContext> {
 

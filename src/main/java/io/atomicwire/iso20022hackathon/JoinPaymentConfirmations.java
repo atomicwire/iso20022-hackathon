@@ -11,6 +11,12 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.RichCoFlatMapFunction;
 import org.apache.flink.util.Collector;
 
+/**
+ * This class joins two input streams, one of {@link AtomicSettlementContext}s representing each
+ * transaction, and one of {@link PaymentContext}s which represent the results of the payments
+ * necessary to fulfill the settlement. It collects and stores the expected objects until everything
+ * has arrived, then forwards the {@link AtomicSettlementContext} downstream.
+ */
 public class JoinPaymentConfirmations
     extends RichCoFlatMapFunction<
         AtomicSettlementContext, PaymentContext, AtomicSettlementContext> {
