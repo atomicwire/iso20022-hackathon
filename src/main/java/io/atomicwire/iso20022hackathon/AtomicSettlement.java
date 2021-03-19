@@ -7,9 +7,14 @@ import io.atomicwire.iso20022hackathon.context.PaymentObligationContext;
 import io.atomicwire.iso20022hackathon.generator.ForeignExchangeTradeGenerator;
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -19,8 +24,11 @@ import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.streaming.api.functions.source.datagen.DataGeneratorSource;
+import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
 
 @Slf4j
 public class AtomicSettlement {
@@ -32,6 +40,9 @@ public class AtomicSettlement {
     boolean trace = params.getBoolean("trace", false);
     long rate = params.getInt("rate", 1);
     int parallelism = params.getInt("parallelism", 1);
+    boolean printThroughput = params.getBoolean("print-throughput", false);
+    boolean printLatency = params.getBoolean("print-latency", false);
+    int outputFreqSecs = params.getInt("output-freq", 10);
 
     if (rate <= 0) {
       rate = Long.MAX_VALUE;
@@ -44,6 +55,9 @@ public class AtomicSettlement {
     log.info("trace: {}", trace ? "enabled" : "disabled");
     log.info("rate: {}", rate < Long.MAX_VALUE ? rate + " settlement requests/sec" : "unlimited");
     log.info("parallelism: {}", env.getParallelism());
+    log.info("print-throughput: {}", printThroughput);
+    log.info("print-latency: {}", printLatency);
+    log.info("output-freq: every {} sec", outputFreqSecs);
     log.info("---");
 
     // Generate a stream of simulated foreign exchange trade settlement requests
@@ -161,20 +175,104 @@ public class AtomicSettlement {
           .addSink(new DiscardingSink<>());
     }
 
-    final int countFreqSec = 10;
-    completedSettlementContexts
-        .map(__ -> 1)
-        .windowAll(TumblingProcessingTimeWindows.of(Time.seconds(countFreqSec)))
-        .sum(0)
-        .map(
-            count -> {
-              log.info(
-                  "Completed atomic settlements: {}/sec",
-                  String.format("%.2f", count / (float) countFreqSec));
-              return null;
-            })
-        .addSink(new DiscardingSink<>());
+    if (printThroughput || printLatency) {
+      completedSettlementContexts
+          .map(context -> Duration.between(context.getStartTimestamp(), Instant.now()).toMillis())
+          .windowAll(TumblingProcessingTimeWindows.of(Time.seconds(outputFreqSecs)))
+          .aggregate(
+              new AggregateFunction<Long, MinMaxSumCount, MinMaxSumCount>() {
+                @Override
+                public MinMaxSumCount createAccumulator() {
+                  return new MinMaxSumCount();
+                }
+
+                @Override
+                public MinMaxSumCount add(Long value, MinMaxSumCount accumulator) {
+                  return accumulator.update(value);
+                }
+
+                @Override
+                public MinMaxSumCount getResult(MinMaxSumCount accumulator) {
+                  return accumulator;
+                }
+
+                @Override
+                public MinMaxSumCount merge(MinMaxSumCount a, MinMaxSumCount b) {
+                  return a.add(b);
+                }
+              },
+              new AllWindowFunction<MinMaxSumCount, Void, TimeWindow>() {
+                @Override
+                public void apply(
+                    TimeWindow window, Iterable<MinMaxSumCount> values, Collector<Void> out)
+                    throws Exception {
+                  MinMaxSumCount stats =
+                      StreamSupport.stream(values.spliterator(), false)
+                          .reduce(MinMaxSumCount::add)
+                          .orElseThrow(() -> new IllegalStateException("no data"));
+
+                  long minLatency = stats.min;
+                  long maxLatency = stats.max;
+                  float avgLatency = stats.sum / (float) stats.count;
+                  float avgThroughput = stats.count / (float) outputFreqSecs;
+
+                  if (printThroughput) {
+                    log.info(
+                        "Completed atomic settlements: {}/sec",
+                        String.format("%.2f", avgThroughput));
+                  }
+
+                  if (printLatency) {
+                    log.info("End-to-end latency (including calls to external systems):");
+                    log.info("- min: {} ms", minLatency);
+                    log.info("- max: {} ms", maxLatency);
+                    log.info("- avg: {} ms", String.format("%.1f", avgLatency));
+                  }
+
+                  log.info("");
+                }
+              })
+          .addSink(new DiscardingSink<>());
+    }
 
     env.execute(AtomicSettlement.class.getSimpleName());
+  }
+
+  @Data
+  private static class MinMaxSumCount {
+    private long min = Integer.MAX_VALUE;
+    private long max = Integer.MIN_VALUE;
+    private long sum = 0;
+    private long count = 0;
+
+    public MinMaxSumCount update(long value) {
+      if (value < min) {
+        min = value;
+      }
+
+      if (value > max) {
+        max = value;
+      }
+
+      sum += value;
+      count += 1;
+
+      return this;
+    }
+
+    public MinMaxSumCount add(MinMaxSumCount other) {
+      if (other.min < min) {
+        min = other.min;
+      }
+
+      if (other.max < max) {
+        max = other.max;
+      }
+
+      sum += other.sum;
+      count += other.count;
+
+      return this;
+    }
   }
 }
