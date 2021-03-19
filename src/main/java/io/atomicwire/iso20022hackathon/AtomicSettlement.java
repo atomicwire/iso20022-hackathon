@@ -36,6 +36,14 @@ public class AtomicSettlement {
   public static void main(String[] args) throws Exception {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+    // When running with high parallelism, you may need to replace the previous line with the
+    // following:
+    /*
+    Configuration configuration = new Configuration();
+    configuration.set(TaskManagerOptions.NETWORK_MEMORY_MAX, MemorySize.ofMebiBytes(2 * 1024));
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);
+     */
+
     ParameterTool params = ParameterTool.fromArgs(args);
     boolean trace = params.getBoolean("trace", false);
     long rate = params.getInt("rate", 1);
