@@ -63,6 +63,8 @@ spotless {
   java {
     googleJavaFormat(versions.googleJavaFormat)
     toggleOffOn()
+
+    licenseHeaderFile "${rootProject.projectDir}/doc/license-header.txt"
   }
 }
 
