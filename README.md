@@ -9,6 +9,11 @@ Instruction (fxtr.014)](https://www.iso20022.org/iso-20022-message-definitions?s
 settles them via mock ISO 20022 communication with the relevant liquidity pool (e.g. a central bank) to reserve the
 necessary liquidity from the delivery agents before instructing the actual payments.
 
+View our solution at [atomicwire.io/hackathon](https://www.atomicwire.io/hackathon):
+
+[![Facilitating Increased Adoption of PvP for Cross-Border Payments](doc/solution-thumbnail.png)](
+https://www.atomicwire.io/hackathon)
+
 
 ### Contents
 
