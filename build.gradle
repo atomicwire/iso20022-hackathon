@@ -90,6 +90,13 @@ task runUnlimited(type: JavaExec) {
   args '--rate', '0', '--parallelism', '0', '--print-throughput', 'true', '--print-latency', 'true'
 }
 
+task runUnlimited32(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  main = javaMainClass
+  args '--rate', '0', '--parallelism', '12', '--print-throughput', 'true',
+    '--print-latency', 'true', '--output-freq', '3'
+}
+
 wrapper {
   gradleVersion = versions.gradle
   distributionType = Wrapper.DistributionType.ALL

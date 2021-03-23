@@ -66,7 +66,7 @@ public class AtomicSettlement {
     int parallelism = params.getInt("parallelism", 1);
     boolean printThroughput = params.getBoolean("print-throughput", false);
     boolean printLatency = params.getBoolean("print-latency", false);
-    int outputFreqSecs = params.getInt("output-freq", 10);
+    int outputFreqSecs = params.getInt("output-freq", 3);
 
     if (rate <= 0) {
       rate = Long.MAX_VALUE;
