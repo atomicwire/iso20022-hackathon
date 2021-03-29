@@ -18,12 +18,16 @@ package io.atomicwire.iso20022hackathon.context;
 
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentObligationContext {
 
-  private final UUID internalUid;
+  private UUID internalUid;
 
-  private final PaymentObligation paymentObligation;
+  private PaymentObligation paymentObligation;
 }

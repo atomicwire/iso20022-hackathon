@@ -20,24 +20,28 @@ import io.atomicwire.iso20022hackathon.iso20022.conceptual.ForeignExchangeTrade;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AtomicSettlementContext {
 
   /**
    * A unique ID used for correlation of events related to this specific trade within the atomic
    * settlement system.
    */
-  @NonNull private final UUID internalUid;
+  @NonNull private UUID internalUid;
 
   /** The ISO 20022 conceptual entity which is being settled. */
-  @NonNull private final ForeignExchangeTrade foreignExchangeTrade;
+  @NonNull private ForeignExchangeTrade foreignExchangeTrade;
 
   /** The original ISO 20022 logical message that initiated this settlement process. */
-  @NonNull private final ForeignExchangeTradeInstructionV04 originalMessage;
+  @NonNull private ForeignExchangeTradeInstructionV04 originalMessage;
 
   /** The timestamp when this context was created. */
-  @NonNull private final Instant startTimestamp;
+  @NonNull private Instant startTimestamp;
 }

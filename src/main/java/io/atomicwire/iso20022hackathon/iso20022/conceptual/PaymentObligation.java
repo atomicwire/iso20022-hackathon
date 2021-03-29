@@ -17,17 +17,21 @@
 package io.atomicwire.iso20022hackathon.iso20022.conceptual;
 
 import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentObligation {
 
-  @NonNull private final BigDecimal amount;
+  @NonNull private BigDecimal amount;
 
-  @NonNull private final String currency;
+  @NonNull private String currency;
 
-  @NonNull private final String deliveryAgentBic;
+  @NonNull private String deliveryAgentBic;
 
-  @NonNull private final String receivingAgentBic;
+  @NonNull private String receivingAgentBic;
 }

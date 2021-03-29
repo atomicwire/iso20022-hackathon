@@ -18,15 +18,19 @@ package io.atomicwire.iso20022hackathon.context;
 
 import io.atomicwire.iso20022hackathon.iso20022.conceptual.PaymentObligation;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class LiquidityReservationContext {
 
-  @NonNull private final UUID internalUid;
+  @NonNull private UUID internalUid;
 
-  @NonNull private final PaymentObligation paymentObligation;
+  @NonNull private PaymentObligation paymentObligation;
 
-  private final boolean success = true;
+  private boolean success;
 }

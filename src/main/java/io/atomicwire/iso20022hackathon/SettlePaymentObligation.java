@@ -86,7 +86,7 @@ public class SettlePaymentObligation
                 paymentObligation.getReceivingAgentBic());
           }
 
-          PaymentContext paymentContext = new PaymentContext(internalUid, paymentObligation);
+          PaymentContext paymentContext = new PaymentContext(internalUid, paymentObligation, true);
           resultFuture.complete(Collections.singleton(paymentContext));
         },
         requestDurationMs,

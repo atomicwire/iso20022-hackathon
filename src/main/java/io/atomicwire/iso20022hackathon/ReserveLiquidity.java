@@ -85,7 +85,7 @@ public class ReserveLiquidity
           }
 
           LiquidityReservationContext liquidityReservationContext =
-              new LiquidityReservationContext(internalUid, paymentObligation);
+              new LiquidityReservationContext(internalUid, paymentObligation, true);
           resultFuture.complete(Collections.singleton(liquidityReservationContext));
         },
         requestDurationMs,

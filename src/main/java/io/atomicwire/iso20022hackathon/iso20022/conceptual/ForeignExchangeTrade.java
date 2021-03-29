@@ -17,11 +17,15 @@
 package io.atomicwire.iso20022hackathon.iso20022.conceptual;
 
 import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ForeignExchangeTrade {
 
-  @NonNull private final List<PaymentObligation> resultingSettlements;
+  @NonNull private List<PaymentObligation> resultingSettlements;
 }
