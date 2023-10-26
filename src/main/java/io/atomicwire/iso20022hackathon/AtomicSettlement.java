@@ -30,16 +30,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.connector.source.util.ratelimit.RateLimiterStrategy;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.RestOptions;
+import org.apache.flink.connector.datagen.source.DataGeneratorSource;
 import org.apache.flink.streaming.api.datastream.AsyncDataStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
-import org.apache.flink.streaming.api.functions.source.datagen.DataGeneratorSource;
 import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -50,15 +55,19 @@ import org.apache.flink.util.Collector;
 public class AtomicSettlement {
 
   public static void main(String[] args) throws Exception {
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    Configuration configuration = new Configuration();
+
+    // Enable web UI
+    configuration.setInteger(RestOptions.PORT, RestOptions.PORT.defaultValue());
 
     // When running with high parallelism, you may need to replace the previous line with the
     // following:
     /*
-    Configuration configuration = new Configuration();
     configuration.set(TaskManagerOptions.NETWORK_MEMORY_MAX, MemorySize.ofMebiBytes(2 * 1024));
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);
      */
+
+    StreamExecutionEnvironment env =
+        StreamExecutionEnvironment.getExecutionEnvironment(configuration);
 
     ParameterTool params = ParameterTool.fromArgs(args);
     boolean trace = params.getBoolean("trace", false);
@@ -85,9 +94,18 @@ public class AtomicSettlement {
     log.info("---");
 
     // Generate a stream of simulated foreign exchange trade settlement requests
+    RateLimiterStrategy rateLimiterStrategy =
+        rate < Long.MAX_VALUE ? RateLimiterStrategy.perSecond(rate) : RateLimiterStrategy.noOp();
+    DataGeneratorSource<ForeignExchangeTradeInstructionV04> settlementRequestsSource =
+        new DataGeneratorSource<>(
+            new ForeignExchangeTradeGenerator(),
+            Long.MAX_VALUE,
+            rateLimiterStrategy,
+            TypeInformation.of(ForeignExchangeTradeInstructionV04.class));
+
     DataStream<ForeignExchangeTradeInstructionV04> settlementRequests =
-        env.addSource(new DataGeneratorSource<>(new ForeignExchangeTradeGenerator(), rate, null))
-            .returns(ForeignExchangeTradeInstructionV04.class);
+        env.fromSource(
+            settlementRequestsSource, WatermarkStrategy.noWatermarks(), "settlementRequests");
 
     if (trace) {
       settlementRequests

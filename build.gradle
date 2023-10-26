@@ -25,10 +25,10 @@ configurations {
 dependencies {
 
   // Flink provided
-  implementation "org.apache.flink:flink-java:${versions.flink}"
-  implementation "org.apache.flink:flink-streaming-java_2.12:${versions.flink}"
-  implementation "org.apache.flink:flink-clients_2.12:${versions.flink}"
-  runtimeOnly "org.apache.flink:flink-runtime-web_2.12:${versions.flink}"
+  implementation "org.apache.flink:flink-streaming-java:${versions.flink}"
+  implementation "org.apache.flink:flink-clients:${versions.flink}"
+  implementation "org.apache.flink:flink-connector-datagen:${versions.flink}"
+  runtimeOnly "org.apache.flink:flink-runtime-web:${versions.flink}"
 
   // Lombok
   annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
@@ -51,7 +51,7 @@ dependencies {
 
 java {
   toolchain {
-    languageVersion = JavaLanguageVersion.of(8)
+    languageVersion = JavaLanguageVersion.of(11)
   }
 }
 
@@ -78,21 +78,21 @@ jar {
   }
 }
 
-task run(type: JavaExec) {
+tasks.register('run', JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
-  main = javaMainClass
+  mainClass = javaMainClass
   args '--trace', 'true'
 }
 
-task runUnlimited(type: JavaExec) {
+tasks.register('runUnlimited', JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
-  main = javaMainClass
+  mainClass = javaMainClass
   args '--rate', '0', '--parallelism', '0', '--print-throughput', 'true', '--print-latency', 'true'
 }
 
-task runUnlimited32(type: JavaExec) {
+tasks.register('runUnlimited32', JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
-  main = javaMainClass
+  mainClass = javaMainClass
   args '--rate', '0', '--parallelism', '12', '--print-throughput', 'true',
     '--print-latency', 'true', '--output-freq', '3'
 }
