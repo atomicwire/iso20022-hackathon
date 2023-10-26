@@ -26,27 +26,13 @@ import io.atomicwire.iso20022hackathon.generator.data.ExchangeRates;
 import io.atomicwire.iso20022hackathon.iso20022.logical.ForeignExchangeTradeInstructionV04;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import org.apache.flink.api.common.functions.RuntimeContext;
-import org.apache.flink.runtime.state.FunctionInitializationContext;
-import org.apache.flink.streaming.api.functions.source.datagen.DataGenerator;
+import org.apache.flink.connector.datagen.source.GeneratorFunction;
 
 public class ForeignExchangeTradeGenerator
-    implements DataGenerator<ForeignExchangeTradeInstructionV04> {
+    implements GeneratorFunction<Long, ForeignExchangeTradeInstructionV04> {
 
   @Override
-  public void open(
-      String name, FunctionInitializationContext context, RuntimeContext runtimeContext)
-      throws Exception {
-    // No state to keep
-  }
-
-  @Override
-  public boolean hasNext() {
-    return true;
-  }
-
-  @Override
-  public ForeignExchangeTradeInstructionV04 next() {
+  public ForeignExchangeTradeInstructionV04 map(Long index) {
     return generateTrade();
   }
 
