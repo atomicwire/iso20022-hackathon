@@ -26,7 +26,7 @@ https://www.atomicwire.io/hackathon)
 Running the demo
 ----------------
 
-> Note: Java 8 or Java 11 is required to run the demo.
+> Note: Java 11 or Java 17 is required to run the demo.
 
 There are two built-in options for running the demo locally.
 
@@ -94,7 +94,7 @@ To run in an IDE of your choice, you must install the Lombok plugin and enable a
 License
 -------
 
-Copyright (c) 2021 [Atomic Wire Technology Limited](https://www.atomicwire.io/)
+Copyright (c) 2023 [Atomic Wire Technology Limited](https://www.atomicwire.io/)
 
 All rights reserved.
 

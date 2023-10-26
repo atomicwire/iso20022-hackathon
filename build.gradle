@@ -78,21 +78,29 @@ jar {
   }
 }
 
+// Required for Java 17
+final def LOCAL_FLINK_JVM_ARGS = [
+  '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+]
+
 tasks.register('run', JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = javaMainClass
+  jvmArgs LOCAL_FLINK_JVM_ARGS
   args '--trace', 'true'
 }
 
 tasks.register('runUnlimited', JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = javaMainClass
+  jvmArgs LOCAL_FLINK_JVM_ARGS
   args '--rate', '0', '--parallelism', '0', '--print-throughput', 'true', '--print-latency', 'true'
 }
 
 tasks.register('runUnlimited32', JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = javaMainClass
+  jvmArgs LOCAL_FLINK_JVM_ARGS
   args '--rate', '0', '--parallelism', '12', '--print-throughput', 'true',
     '--print-latency', 'true', '--output-freq', '3'
 }
